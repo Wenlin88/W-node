@@ -1,0 +1,13 @@
+{
+    "python.languageServer": "Pylance",
+    "python.analysis.autoSearchPath": true,
+   "python.linting.enabled": true,
+"python.linting.pylintEnabled": true,
+"python.analysis.extraPaths": [
+     "src/lib",
+     "stubs/cpython_patch",
+     "stubs/micropython-1_17-frozen/esp32/GENERIC",
+     "stubs/micropython-esp32-1_17",
+     "stubs/micropython-1_14-frozen/esp32/GENERIC",
+],
+}
