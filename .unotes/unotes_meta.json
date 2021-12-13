@@ -1,0 +1,39 @@
+{
+  "name": "",
+  "isOrdered": true,
+  "folders": {
+    "__pycache__": {
+      "name": "__pycache__",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    },
+    "Airconditioning machine": {
+      "name": "Airconditioning machine",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    },
+    "Bluethooth sensors to mqtt": {
+      "name": "Bluethooth sensors to mqtt",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    },
+    "src": {
+      "name": "src",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    },
+    "stubs": {
+      "name": "stubs",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    }
+  },
+  "files": {
+    "README": 0
+  }
+}
