@@ -1,45 +1,58 @@
 import time
 import gc
-from umqtt.simple import MQTTClient
 import ubinascii
 import machine
-import config
+from umqtt.simple import MQTTClient
 import homeassistant.mqtt_sensor
-import ruuvitag
 from ttgo_display import ttgo_display
+from micropython import const
+import ble_sensors_and_beacons
+import config
+
+print('Memory at beginning')
+print('Allocated: ' + str(gc.mem_alloc()))
+print('Free: ' + str(gc.mem_free()))
 
 
-
-mqtt_sensor_handler = homeassistant.mqtt_sensor.Core(client)
+mqtt_sensor_handler = homeassistant.mqtt_sensor.mqtt_sensors_handler()
 display = ttgo_display.display()
+display.tft.rotation(3)
 display.text('Running main!', 0)
-display.text('Successful runs: ', 1)
 
-i = 1
+client_id = ubinascii.hexlify(machine.unique_id())
+
+f = open('client.key', "r")
+key_data = f.read()
+f.close()
+
+f = open('client.crt', "r")
+cert_data = f.read()
+f.close()
+
+i = 0
+
+bsb = ble_sensors_and_beacons.scanner()
+
+client = MQTTClient(
+    client_id,
+    server = config.mqtt_server,
+    user = config.mqtt_user,
+    password = config.mqtt_password,
+    port = 8883,
+    keepalive = 1000,
+    ssl=True,
+    ssl_params={'key':key_data,'cert':cert_data})
+
 while True:
-    try:
-        gc.collect()
-        client_id = ubinascii.hexlify(machine.unique_id())
-        client = MQTTClient(
-            client_id,
-            server = config.mqtt_server,
-            user = config.mqtt_user,
-            password = config.mqtt_password,
-            port = 8883,
-            ssl=True,
-            ssl_params={})
-        time.sleep(1)
-        ruuvi = ruuvitag.RuuviTag(callback_handler = mqtt_sensor_handler.append_sensor_data)
-        client.disconnect()
-        ruuvi.scan()
-        time.sleep(30)
-        i += 1
-        display.text(str(i), 2)
-        break
+    # try:
+    bsb.scan()
+    gc.collect()
+    print('Connect to MQTT broker!')
+    client.connect(clean_session=True)
+    i += 1
+    client.publish('W-node/debug', msg=str(i).encode(), qos=0, retain=False)
+    client.disconnect()
+    display.text('Loops: ' + str(i), 1)
 
-        
-    except Exception as e:
-        print(e)
-        display.text('Main FAIL!', 3)
-        break
+    break
 

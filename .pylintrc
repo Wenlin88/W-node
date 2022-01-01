@@ -1,6 +1,6 @@
 [MASTER]
-# Loaded Stubs:  micropython-esp32-1_16
-init-hook='import sys;sys.path[1:1] = ["src/lib", "stubs/cpython_patch", "stubs/micropython-1_17-frozen/esp32/GENERIC", "stubs/micropython-esp32-1_17","stubs/micropython-1_14-frozen/esp32/GENERIC",]'
+# Loaded Stubs:  micropython-esp32-1_17
+init-hook='import sys;sys.path[1:1] = ["src/lib", "stubs\cpython_patch", "stubs\cpython_core", "stubs\micropython-esp32-1_17", "stubs\micropython-1_17-Latest-frozen\esp32\GENERIC", "stubs\micropython-v1_17-Latest-docstubs", "stubs\micropython_cpython_core", ]'
 
 disable = missing-docstring, line-too-long, trailing-newlines, broad-except, logging-format-interpolation, invalid-name, 
         no-method-argument, assignment-from-no-return, too-many-function-args, unexpected-keyword-arg

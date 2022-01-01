@@ -1,12 +1,11 @@
 import gc
 
-import config
 import esp
-import webrepl
+# import webrepl
 
 import network
-import config
 from ttgo_display import ttgo_display
+import config
 
 gc.collect()
 esp.osdebug(None)
@@ -20,6 +19,7 @@ def connect_to_wifi(ssid, pwd):
         while not sta_if.isconnected():
             pass
     display = ttgo_display.display()
+    display.tft.rotation(3)
     print('Connected!')
     for i, item in enumerate(sta_if.ifconfig()):
         display.text(item, i)
@@ -28,12 +28,5 @@ def connect_to_wifi(ssid, pwd):
 connect_to_wifi(config.SSID, config.wifi_passwd)
 # webrepl.start(password=config.webrepl_passwd)
 
-# f = open('client.key', "r")
-# key_data = f.read()
-# f.close()
-
-# f = open('client.crt', "r")
-# cert_data = f.read()
-# f.close()
 
 
