@@ -54,12 +54,7 @@ class wnode_engine():
         if 'hw_type' in params:
             self.hw_type = params['hw_type']
             if self.hw_type == 'TTGO display':
-                import wnode.ttgo as ttgo
-                display = ttgo.display_engine()
-                display.text(self.friendly_name, 0)
-                display.text(f'status: {self.status}',1)
-                self.display = display
-                info('TTGO Display hardware initialized!')
+                self._init_ttgo_display()
             elif self.hw_type == 'Atom matrix':
                 import wnode.m5stack as m5
                 self.device = m5.atom_matrix()
@@ -70,6 +65,16 @@ class wnode_engine():
                 self.device = ttgo.tcell()
                 self.device.status_signal('initializing')
                 info('TTGO T-cell hardware initialized!')  
+        else:
+            info('HW type not defined. Trying to auto identify...')
+            import uos
+            mach_info = uos.uname()
+            debug(mach_info)
+            if mach_info.machine == 'M5Stack ATOM with ESP32-PICO-D4':
+                info('Atom found! Identification between Lite and Matrix missing. This is in todo. This could be done by for example detecting if there is MPU6886 or not....')
+            elif mach_info.machine == 'TTGO T-Display with ESP32':
+                info('TTGO display found')
+                self._init_ttgo_display()
         if 'wifi' in params:
             if params['wifi'] == True:
                 info('Initializing wifi...')
@@ -107,8 +112,10 @@ class wnode_engine():
                     self.status = 'online'
                     info('MQTT initialization done!')
                 else:
-                    error('MQTT connection failed!')
+                    error('MQTT connection failed! Resetting after 30sec...')
                     self.status = 'error'
+                    time.sleep(30)
+                    machine.soft_reset()
 
                 if not self.hw_type == None:
                     self.status_update()
@@ -125,8 +132,10 @@ class wnode_engine():
                             info('HA introduction successful!')
                             self.status = 'online'
                         else:
-                            error('HA introduction failed!')
+                            error('HA introduction failed! Resetting after 30sec...')
                             self.status = 'error'
+                            time.sleep(30)
+                            machine.soft_reset()
 
                         if not self.hw_type == None:
                             self.status_update()
@@ -317,7 +326,16 @@ class wnode_engine():
     def install_mqtt_simple():
         import upip
         upip.install('umqtt.simple')
-
+    
+    # Internals
+    def _init_ttgo_display(self):
+        import wnode.ttgo as ttgo
+        display = ttgo.display_engine()
+        display.text(self.friendly_name, 0)
+        display.text(f'status: {self.status}',1)
+        self.display = display
+        self.hw_type = 'TTGO display'
+        info('TTGO Display hardware initialized!')
 if __name__ is "__main__":
     wnode_parameters = {
     'hw_type': 'ATOM',

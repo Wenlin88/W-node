@@ -40,14 +40,13 @@ critical = logger.critical
 memory_usage_check(msg = 'Memory at beginning')
 
 wnode_parameters = {
-    'hw_type': 'Atom matrix',
     'wifi': True,
     'mqtt': 1,
     'homeassistant': 1,
-    'ble': 1
+    'ble': 0
     }
 wn = wnode.wnode_engine('W-Node', wnode_parameters)
-wn.run_ble_beacon_scan_app()
+wn.run_tempearature_scan_app()
 
 
 

@@ -3,7 +3,7 @@ import ulogger
 def default_handlers():
     handlers = (
         ulogger.Handler(
-            level=ulogger.INFO,
+            level=ulogger.DEBUG,
             colorful=True,
             fmt="&(time)% : &(level)%\t&(name)%\t&(msg)%",
             direction=ulogger.TO_TERM,

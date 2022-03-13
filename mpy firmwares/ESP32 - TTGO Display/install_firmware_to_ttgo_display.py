@@ -14,8 +14,8 @@ def exicute_cmd_command_with_realtime_output(cmd):
             print(realtime_output.strip(), flush=False)
             sys.stdout.flush()
 
-exicute_cmd_command_with_realtime_output(cmd = 'esptool --chip esp32 --port COM4 erase_flash')
-exicute_cmd_command_with_realtime_output(cmd = 'esptool --chip esp32 --port COM4 write_flash -z 0x1000 TTGO_DISPLAY_V1.18.bin')
+exicute_cmd_command_with_realtime_output(cmd = 'esptool --chip esp32 --port COM18 erase_flash')
+exicute_cmd_command_with_realtime_output(cmd = 'esptool --chip esp32 --port COM18 write_flash -z 0x1000 TTGO_DISPLAY_V1.18.bin')
 input('press enter to continue...')
 
 # %%
