@@ -7,5 +7,6 @@
      "src/lib",
      "stubs/cpython_patch",
      "stubs/micropython-latest-docstubs",
-     "stubs/micropython-v1_18-esp32",],
+     "stubs/micropython-v1_18-esp32",
+     "stubs/micropython-v1_18-frozen/esp32/M5STACK_ATOM"],
 }

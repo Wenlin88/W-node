@@ -24,7 +24,7 @@ class wifi_engine():
         if ssid is None:
             ssid = config.SSID
             pwd = config.wifi_passwd
-        print(f'\n--- Connecting to {ssid}... ---')
+        info(f'--- Connecting to {ssid}... ---')
         
         sta_if = network.WLAN(network.STA_IF)
         if not sta_if.isconnected():
@@ -44,14 +44,15 @@ class wifi_engine():
                     error('WiFi unreachable!')
                     sta_if.active(False)
                     return False # Tästä syystä voisi myös nostaa ihan virheenkin. Katsotaanko onko siitä mitään hyötyä, että ohjelma pysyy vielä suorituskykyisenä
-            print(f'\nConnected to Wifi')
+            print('')
+            info(f'Connected to Wifi')
             debug(sta_if.ifconfig()[0])
             self.ip = sta_if.ifconfig()[0]
             
         connected = self.check_internet_connection()
         self.wlan = sta_if
         if connected:
-            print(f'--- Connected to internet! ---\n')
+            info(f'--- Connected to internet! ---')
             return True
         else:
             warning('Connection to wifi ok but no internet connection!!')
@@ -82,10 +83,11 @@ class wifi_engine():
         for i, result in enumerate(scan_result):
             info(f'{i} \t {result[3]} \t {result[0].decode()} ')
         sta_if.active(False)
-        info('--- End of scan  ---\n')    
+        info('--- End of scan  ---')    
 
 
 
 if __name__ == '__main__':
     we = wifi_engine()
     we.connect()
+        

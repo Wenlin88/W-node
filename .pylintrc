@@ -1,6 +1,6 @@
 [MASTER]
 # Loaded Stubs:  micropython-esp32-1_17
-init-hook='import sys;sys.path[1:1] = [src/lib, stubs/micropython-latest-docstubs, stubs/micropython-v1_18-esp32]'
+init-hook='import sys;sys.path[1:1] = [src/lib, stubs/micropython-latest-docstubs, stubs/micropython-v1_18-esp32, stubs/micropython-v1_18-esp32, stubs/micropython-v1_18-frozen/esp32, "stubs/micropython-v1_18-frozen/esp32/M5STACK_ATOM""]'
 
 disable = missing-docstring, line-too-long, trailing-newlines, broad-except, logging-format-interpolation, invalid-name, 
         no-method-argument, assignment-from-no-return, too-many-function-args, unexpected-keyword-arg

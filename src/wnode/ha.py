@@ -3,7 +3,7 @@ import network
 import time
 import ubinascii
 import machine
-from umqtt.simple2 import MQTTClient
+from umqtt.simple import MQTTClient
 import config
 import re
 import json
@@ -39,16 +39,15 @@ class ha_engine():
             name = friendly_name
             measurement_name = "Debug Message"
             
-            client_id = ubinascii.hexlify(machine.unique_id())
             friendly_name = name
             topic_base_name = re.sub('\W+','', friendly_name).lower()
             topic_name = re.sub('\W+','', measurement_name).lower()
             
-            device_description = f"{device_type} - {hw_type} - {client_id.decode()}"
+            device_description = f"{device_type} - {hw_type}"
             manufacturer =  manufacturer
             sw_version = sw_version
 
-            self._ha_device_id = topic_base_name + "_"  + client_id.decode()
+            self._ha_device_id = topic_base_name
             self.wnode_debug_msg_topic = "homeassistant/sensor/" + topic_base_name + "/debug"
             
             msg = {
@@ -65,7 +64,7 @@ class ha_engine():
             "name": measurement_name,
             "state_class": "measurement",
             "state_topic": self.wnode_debug_msg_topic,
-            "unique_id": topic_base_name +"_"+ topic_name + "_" + client_id.decode()
+            "unique_id": topic_base_name +"_"+ topic_name
             }
             
             self.mqtt_client.connect()
@@ -94,7 +93,7 @@ class ha_engine():
                 "name": measurement_name,
                 "state_class": "measurement",
                 "state_topic": self.wnode_uptime_topic,
-                "unique_id": topic_base_name +"_"+ topic_name + "_" + client_id.decode()
+                "unique_id": topic_base_name +"_"+ topic_name
                 }
 
             time.sleep(relax_time_between_publish)
@@ -112,6 +111,44 @@ class ha_engine():
             return True
         except:
             error('Introduction for HA failed!')
+    def introduce_new_measurement_to_exsitsting_sensor(self,measurement_name, friendly_name, measurement_unit = "V"):
+        try:
+            measurement_name = re.sub('\W+','', measurement_name).lower()
+            device_name = re.sub('\W+','', friendly_name).lower()
+            full_topic = "homeassistant/sensor/" + device_name + "/" + measurement_name
+            msg = {
+                "device": {
+                    "identifiers": [
+                    device_name
+                    ],
+                },
+                "name": measurement_name,
+                "unit_of_measurement": measurement_unit,
+                "state_class": "measurement",
+                "state_topic": full_topic,
+                "unique_id": device_name +"_"+ measurement_name
+                }
+            time.sleep(0.1)
+            self.mqtt_client.connect()
+            time.sleep(0.1)
+            self.mqtt_client.publish(
+                "homeassistant/sensor/" + device_name + "/" + measurement_name + "/config",
+                msg=json.dumps(msg).encode(),
+                qos = 1)
+            self.mqtt_client.disconnect()
+        except:
+            pass
+    def publish_measurement(self,measurement_name, friendly_name, value):
+        measurement_name = re.sub('\W+','', measurement_name).lower()
+        device_name = re.sub('\W+','', friendly_name).lower()
+        time.sleep(0.1)
+        self.mqtt_client.connect()
+        time.sleep(0.1)
+        self.mqtt_client.publish(
+            "homeassistant/sensor/" +  device_name + "/" + measurement_name,
+            msg=str(value).encode(),
+            qos = 1)
+        self.mqtt_client.disconnect()
     def publish_ble_beacon_data(self, beacon_data):
         for data in beacon_data:
             # If named tuple name is in knowns sensor types 

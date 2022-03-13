@@ -8,18 +8,6 @@
       "folders": {},
       "files": {}
     },
-    "Airconditioning machine": {
-      "name": "Airconditioning machine",
-      "isOrdered": true,
-      "folders": {},
-      "files": {}
-    },
-    "Bluethooth sensors to mqtt": {
-      "name": "Bluethooth sensors to mqtt",
-      "isOrdered": true,
-      "folders": {},
-      "files": {}
-    },
     "src": {
       "name": "src",
       "isOrdered": true,
@@ -32,20 +20,8 @@
       "folders": {},
       "files": {}
     },
-    "Airconditioning machine 2": {
-      "name": "Airconditioning machine 2",
-      "isOrdered": true,
-      "folders": {},
-      "files": {}
-    },
     "mpy firmwares": {
       "name": "mpy firmwares",
-      "isOrdered": true,
-      "folders": {},
-      "files": {}
-    },
-    "src - Copy": {
-      "name": "src - Copy",
       "isOrdered": true,
       "folders": {},
       "files": {}

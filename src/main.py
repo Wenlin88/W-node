@@ -1,5 +1,6 @@
 import gc
 import time
+
 import ubinascii
 import machine
 import micropython
@@ -11,7 +12,6 @@ import urequests
 import re
 import wnode
 import ulogger
-
 def memory_usage_check(msg) -> None:
     print(msg)
     print('Allocated: ' + str(gc.mem_alloc()))
@@ -26,7 +26,6 @@ def get_key_and_cert_data():
     f.close()
 
     return key_data, cert_data
-
 import ulogger
 import wnode.logging_handlers
 
@@ -37,29 +36,19 @@ warning = logger.warn
 error = logger.error
 critical = logger.critical
 
+
 memory_usage_check(msg = 'Memory at beginning')
 
 wnode_parameters = {
-    'hw_type': 'ATOM',
+    'hw_type': 'Atom matrix',
     'wifi': True,
-    'mqtt': True,
-    'homeassistant': True,
-    'ble': True
+    'mqtt': 1,
+    'homeassistant': 1,
+    'ble': 1
     }
-wn = wnode.wnode_engine('W-Node 2', wnode_parameters)
+wn = wnode.wnode_engine('W-Node', wnode_parameters)
+wn.run_ble_beacon_scan_app()
 
-retry_count = 0
-while True:
-    try:
-        gc.collect()
-        time.sleep(0.1)
-        wn.scan_ble_beacons(5)
-        time.sleep(0.1)
-        wn.status_update()
-        time.sleep(1)
 
-    except KeyboardInterrupt as e: 
-        print('Stopping main...')
-        break
 
 

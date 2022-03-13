@@ -2,7 +2,7 @@ import network
 import time
 import ubinascii
 import machine
-from umqtt.simple2 import MQTTClient
+from umqtt.simple import MQTTClient
 import config
 import re
 import json
