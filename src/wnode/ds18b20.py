@@ -67,12 +67,11 @@ class engine():
         name = self.friendly_name
         measurement_name = "Temperature"
         
-        client_id = ubinascii.hexlify(machine.unique_id())
         friendly_name = name
         topic_base_name = re.sub('\W+','', friendly_name).lower()
         topic_name = re.sub('\W+','', measurement_name).lower()
         
-        self._device_id = topic_base_name + "_"  + client_id.decode()
+        self._device_id = topic_base_name
         self._DS18B20_topic = "homeassistant/sensor/" + topic_base_name + "/temperature"
 
         msg = {
@@ -86,21 +85,25 @@ class engine():
             "unit_of_measurement": "\u00b0C",
             "state_class": "measurement",
             "state_topic": self._DS18B20_topic,
-            "unique_id": topic_base_name +"_"+ topic_name + "_" + client_id.decode()
+            "unique_id": topic_base_name +"_"+ topic_name
             }
 
         self.mqtt_client.connect()
+        time.sleep(0.1)
         self.mqtt_client.publish(
             "homeassistant/sensor/" + topic_base_name + "/" + topic_name + "/config",
             msg=json.dumps(msg).encode('UTF-16'),
             qos = 1)
+        time.sleep(0.1)
         self.mqtt_client.disconnect()
     def _publish_DS18B20_meas(self,T):
         self.mqtt_client.connect()
+        time.sleep(0.1)
         self.mqtt_client.publish(
             self._DS18B20_topic,
             msg=str(round(T,2)).encode(),
             qos = 0)
+        time.sleep(0.1)
         self.mqtt_client.disconnect()
 
 if __name__ == '__main__':

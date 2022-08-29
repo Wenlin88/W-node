@@ -34,110 +34,104 @@ class ha_engine():
         ]
     def introduce_wnode_to_ha(self, friendly_name, device_type, hw_type, manufacturer, sw_version):
         info(f'Introduction on progress. Please wait...')
-        try:
-            relax_time_between_publish = 0.2
-            name = friendly_name
-            measurement_name = "Debug Message"
-            
-            friendly_name = name
-            topic_base_name = re.sub('\W+','', friendly_name).lower()
-            topic_name = re.sub('\W+','', measurement_name).lower()
-            
-            device_description = f"{device_type} - {hw_type}"
-            manufacturer =  manufacturer
-            sw_version = sw_version
+        relax_time_between_publish = 0.2
+        name = friendly_name
+        measurement_name = "Debug Message"
+        
+        friendly_name = name
+        topic_base_name = re.sub('\W+','', friendly_name).lower()
+        topic_name = re.sub('\W+','', measurement_name).lower()
+        
+        device_description = f"{device_type} - {hw_type}"
+        manufacturer =  manufacturer
+        sw_version = sw_version
 
-            self._ha_device_id = topic_base_name
-            self.wnode_debug_msg_topic = "homeassistant/sensor/" + topic_base_name + "/debug"
-            
-            msg = {
+        self._ha_device_id = topic_base_name
+        self.wnode_debug_msg_topic = "homeassistant/sensor/" + topic_base_name + "/debug"
+        
+        msg = {
+        "device": {
+            "identifiers": [
+            self._ha_device_id
+            ],
+            "manufacturer": manufacturer,
+            "model": device_description,
+            "name": friendly_name,
+            "sw_version": sw_version
+        },
+        "icon": "mdi:message",
+        "name": measurement_name,
+        "state_class": "measurement",
+        "state_topic": self.wnode_debug_msg_topic,
+        "unique_id": topic_base_name +"_"+ topic_name
+        }
+        
+        self.mqtt_client.connect()
+        self.mqtt_client.publish(
+            "homeassistant/sensor/" + topic_base_name + "/" + topic_name + "/config",
+            msg=json.dumps(msg).encode(),
+            qos = 1)
+
+        time.sleep(relax_time_between_publish)
+        self.mqtt_client.publish(
+            "homeassistant/sensor/" +  topic_base_name + "/debug",
+            msg='Default initialization done!'.encode(),
+            qos = 1)
+
+        measurement_name = "uptime"
+        topic_name = re.sub('\W+','', measurement_name).lower()
+        self.wnode_uptime_topic = "homeassistant/sensor/" + topic_base_name + "/uptime"
+
+        msg = {
             "device": {
                 "identifiers": [
                 self._ha_device_id
                 ],
-                "manufacturer": manufacturer,
-                "model": device_description,
-                "name": friendly_name,
-                "sw_version": sw_version
             },
-            "icon": "mdi:message",
+            "icon": "mdi:clock",
             "name": measurement_name,
             "state_class": "measurement",
-            "state_topic": self.wnode_debug_msg_topic,
+            "state_topic": self.wnode_uptime_topic,
             "unique_id": topic_base_name +"_"+ topic_name
             }
-            
-            self.mqtt_client.connect()
-            self.mqtt_client.publish(
-                "homeassistant/sensor/" + topic_base_name + "/" + topic_name + "/config",
-                msg=json.dumps(msg).encode(),
-                qos = 1)
 
-            time.sleep(relax_time_between_publish)
-            self.mqtt_client.publish(
-                "homeassistant/sensor/" +  topic_base_name + "/debug",
-                msg='Default initialization done!'.encode(),
-                qos = 1)
+        time.sleep(relax_time_between_publish)
+        self.mqtt_client.publish(
+            "homeassistant/sensor/" + topic_base_name + "/" + topic_name + "/config",
+            msg=json.dumps(msg).encode(),
+            qos = 1)
 
-            measurement_name = "uptime"
-            topic_name = re.sub('\W+','', measurement_name).lower()
-            self.wnode_uptime_topic = "homeassistant/sensor/" + topic_base_name + "/uptime"
-
-            msg = {
-                "device": {
-                    "identifiers": [
-                    self._ha_device_id
-                    ],
-                },
-                "icon": "mdi:clock",
-                "name": measurement_name,
-                "state_class": "measurement",
-                "state_topic": self.wnode_uptime_topic,
-                "unique_id": topic_base_name +"_"+ topic_name
-                }
-
-            time.sleep(relax_time_between_publish)
-            self.mqtt_client.publish(
-                "homeassistant/sensor/" + topic_base_name + "/" + topic_name + "/config",
-                msg=json.dumps(msg).encode(),
-                qos = 1)
-
-            time.sleep(relax_time_between_publish)
-            self.mqtt_client.publish(
-                "homeassistant/sensor/" +  topic_base_name + "/uptime",
-                msg=str(time.ticks_ms()/1000).encode(),
-                qos = 1)
-            self.mqtt_client.disconnect()
-            return True
-        except:
-            error('Introduction for HA failed!')
-    def introduce_new_measurement_to_exsitsting_sensor(self,measurement_name, friendly_name, measurement_unit = "V"):
-        try:
-            measurement_name = re.sub('\W+','', measurement_name).lower()
-            device_name = re.sub('\W+','', friendly_name).lower()
-            full_topic = "homeassistant/sensor/" + device_name + "/" + measurement_name
-            msg = {
-                "device": {
-                    "identifiers": [
-                    device_name
-                    ],
-                },
-                "name": measurement_name,
-                "unit_of_measurement": measurement_unit,
-                "state_class": "measurement",
-                "state_topic": full_topic,
-                "unique_id": device_name +"_"+ measurement_name
-                }
-            time.sleep(0.1)
-            self.mqtt_client.connect()
-            time.sleep(0.1)
-            self.mqtt_client.publish(
-                "homeassistant/sensor/" + device_name + "/" + measurement_name + "/config",
-                msg=json.dumps(msg).encode(),
-                qos = 1)
-            self.mqtt_client.disconnect()
-        except:
-            pass
+        time.sleep(relax_time_between_publish)
+        self.mqtt_client.publish(
+            "homeassistant/sensor/" +  topic_base_name + "/uptime",
+            msg=str(time.ticks_ms()/1000).encode(),
+            qos = 1)
+        self.mqtt_client.disconnect()
+        return True
+    def introduce_new_measurement_to_exsitsting_sensor(self,measurement_name, friendly_name, unit = "V"):
+        measurement_name = re.sub('\W+','', measurement_name).lower()
+        device_name = re.sub('\W+','', friendly_name).lower()
+        full_topic = "homeassistant/sensor/" + device_name + "/" + measurement_name
+        msg = {
+            "device": {
+                "identifiers": [
+                device_name
+                ],
+            },
+            "name": measurement_name,
+            "unit_of_measurement": unit,
+            "state_class": "measurement",
+            "state_topic": full_topic,
+            "unique_id": device_name +"_"+ measurement_name
+            }
+        time.sleep(0.1)
+        self.mqtt_client.connect()
+        time.sleep(0.1)
+        self.mqtt_client.publish(
+            "homeassistant/sensor/" + device_name + "/" + measurement_name + "/config",
+            msg=json.dumps(msg).encode(),
+            qos = 1)
+        self.mqtt_client.disconnect()
     def publish_measurement(self,measurement_name, friendly_name, value):
         measurement_name = re.sub('\W+','', measurement_name).lower()
         device_name = re.sub('\W+','', friendly_name).lower()

@@ -8,6 +8,7 @@ import wnode.mqtt as mqtt
 import wnode.ha as ha
 import wnode.ble as ble
 import ubinascii
+import math
 
 
 def memory_usage_check(msg) -> None:
@@ -119,7 +120,7 @@ class wnode_engine():
 
                 if not self.hw_type == None:
                     self.status_update()
-            else:
+            else:   
                 debug('MQTT disabled')
         if 'homeassistant' in params:
             if params['homeassistant'] == True:
@@ -156,29 +157,51 @@ class wnode_engine():
         highlighted_info(f"--- {self.friendly_name} initialized! ---") # Initialization completed message
     def run_ble_beacon_scan_app(self, cycle_time = 6, scan_time = 5):
         while True:
-            try:
-                gc.collect()
-                self.status = 'scanning'
-                self.status_update()
-                time.sleep(0.1)
-                self.scan_ble_beacons(scan_time)
-                time.sleep(0.1)
-                self.status_update()
-                time.sleep(cycle_time-scan_time)
-
-            except KeyboardInterrupt as e: 
-                print('Stopping main...')
-                break
+            gc.collect()
+            self.status = 'scanning'
+            self.status_update()
+            time.sleep(0.1)
+            self.scan_ble_beacons(scan_time)
+            time.sleep(0.1)
+            self.status_update()
+            time.sleep(cycle_time-scan_time)
     def scan_ble_beacons(self, scan_time = 5):
-        try:
+        if self.wifi.check_internet_connection():
+            info(f'Scanning for Bluetooth devices for {scan_time}s...')
+            self.ble.scan(scan_time = scan_time)
+            beacon_data = self.ble.search_beacons_from_scan_results()
+            number_of_beacons_found = len(beacon_data)
+            info(f'{number_of_beacons_found} beacons found.')
+            info('Publishing beacon data to HA...')
+            self.ha.publish_ble_beacon_data(beacon_data)
+            info('Scan done')
+            self.retry_count = 0
+            self.status = 'online'
+        else:
+            connection = False
+            while not connection:
+                connection = self.wn.wifi.connect()
+                if self.retry_count < 100 and connection:
+                    warning('No connection to WiFi. Retrying after 10s...')
+                    self.retry_count += 1
+                    time.slepp(10)
+                else:
+                    warning('Two many reconnect attempts to wifi! Restarting..')
+                    machine.reset()
+            self.retry_count = 0
+            self.status = 'online'
+    def run_temperature_scan_app(self, cycle_time = 5):
+        import wnode.ds18b20 as ds18b20
+        ds = ds18b20.engine(display = self.display, friendly_name = self.friendly_name, mqtt_client = self.mqtt.client)
+        ds.init_DS18B20_measurement(25)
+        while True:
             if self.wifi.check_internet_connection():
-                info(f'Scanning for Bluetooth devices for {scan_time}s...')
-                self.ble.scan(scan_time = scan_time)
-                beacon_data = self.ble.search_beacons_from_scan_results()
-                number_of_beacons_found = len(beacon_data)
-                info(f'{number_of_beacons_found} beacons found.')
-                info('Publishing beacon data to HA...')
-                self.ha.publish_ble_beacon_data(beacon_data)
+                gc.collect()
+                time.sleep(0.1)
+                ds.read_DS18B20_measurement()
+                time.sleep(0.1)
+                self.status_update()
+                time.sleep(cycle_time)
                 info('Scan done')
                 self.retry_count = 0
                 self.status = 'online'
@@ -189,117 +212,74 @@ class wnode_engine():
                     if self.retry_count < 100 and connection:
                         warning('No connection to WiFi. Retrying after 10s...')
                         self.retry_count += 1
-                        time.slepp(10)
+                        time.sleep(10)
+                    else:
+                        warning('Two many reconnect attempts to wifi! Restarting..')
+                        machine.reset()
+                self.retry_count = 0
+                self.status = 'online'  
+    def run_temperature_scan_app2(self, cycle_time = 5):
+        self.device.init_adc()
+        self.ha.introduce_new_measurement_to_exsitsting_sensor('Temperature', self.friendly_name, unit = "°C")
+        while True:
+            if self.wifi.check_internet_connection():
+                gc.collect()
+                time.sleep(0.1)
+                u1 = self.device.read_adc()
+                r2 = 100e3
+                vtot = 3.35
+                r1 = u1*r2/(vtot-u1)
+                debug(f'Resistance: {r1}')
+                t = 1/(1/(25+273.15)-math.log(32762/r1)/4300)-273.15
+                info(f'Temperature: {t}')
+                self.ha.publish_measurement('Temperature', self.friendly_name, t)
+                time.sleep(0.1)
+                self.status_update()
+                time.sleep(cycle_time)
+                info('Scan done')
+                self.retry_count = 0
+                self.status = 'online'
+            else:
+                connection = False
+                while not connection:
+                    connection = self.wn.wifi.connect()
+                    if self.retry_count < 100 and connection:
+                        warning('No connection to WiFi. Retrying after 10s...')
+                        self.retry_count += 1
+                        time.sleep(10)
+                    else:
+                        warning('Two many reconnect attempts to wifi! Restarting..')
+                        machine.reset()
+                self.retry_count = 0
+                self.status = 'online'   
+    
+    def run_tcell_app(self, cycle_time = 5):
+        self.ha.introduce_new_measurement_to_exsitsting_sensor('battery_voltage',self.friendly_name)
+        while True:
+            if self.wifi.check_internet_connection():
+                gc.collect()
+                time.sleep(0.1)
+                bat_volt = self.device.read_battery_voltage()
+                self.ha.publish_measurement('battery_voltage', self.friendly_name, bat_volt)
+                time.sleep(0.1)
+                self.status_update()
+                time.sleep(cycle_time)
+                info('Scan done')
+                self.retry_count = 0
+                self.status = 'online'
+            else:
+                connection = False
+                while not connection:
+                    connection = self.wn.wifi.connect()
+                    if self.retry_count < 100 and connection:
+                        warning('No connection to WiFi. Retrying after 10s...')
+                        self.retry_count += 1
+                        time.sleep(10)
                     else:
                         warning('Two many reconnect attempts to wifi! Restarting..')
                         machine.reset()
                 self.retry_count = 0
                 self.status = 'online'
-        except OSError as e:
-            if self.retry_count < 5:
-                warning('OSError. Retrying...')
-                self.retry_count += 1
-            else:
-                error('Two many OSErrors! Restarting..')
-                machine.reset()
-        except MQTTException as e:
-            if self.retry_count < 5:
-                warning('MQTTException. Retrying...')
-                self.retry_count += 1
-            else:
-                error('Two many MQTTException! Restarting..')
-                machine.reset()
-    def run_tempearature_scan_app(self, cycle_time = 5):
-        import wnode.ds18b20 as ds18b20
-        ds = ds18b20.engine(display = self.display, friendly_name = self.friendly_name, mqtt_client = self.mqtt.client)
-        ds.init_DS18B20_measurement(25)
-        while True:
-            try:
-                if self.wifi.check_internet_connection():
-                    gc.collect()
-                    time.sleep(0.1)
-                    ds.read_DS18B20_measurement()
-                    time.sleep(0.1)
-                    self.status_update()
-                    time.sleep(cycle_time)
-                    info('Scan done')
-                    self.retry_count = 0
-                    self.status = 'online'
-                else:
-                    connection = False
-                    while not connection:
-                        connection = self.wn.wifi.connect()
-                        if self.retry_count < 100 and connection:
-                            warning('No connection to WiFi. Retrying after 10s...')
-                            self.retry_count += 1
-                            time.sleep(10)
-                        else:
-                            warning('Two many reconnect attempts to wifi! Restarting..')
-                            machine.reset()
-                    self.retry_count = 0
-                    self.status = 'online'
-            except OSError as e:
-                if self.retry_count < 5:
-                    warning('OSError. Retrying...')
-                    self.retry_count += 1
-                else:
-                    error('Two many OSErrors! Restarting..')
-                    machine.reset()
-            except MQTTException as e:
-                if self.retry_count < 5:
-                    warning('MQTTException. Retrying...')
-                    self.retry_count += 1
-                else:
-                    error('Two many MQTTException! Restarting..')
-                    machine.reset()
-            except KeyboardInterrupt as e: 
-                print('Stopping main...')
-                break    
-    def run_tcell_app(self, cycle_time = 5):
-        self.ha.introduce_new_measurement_to_exsitsting_sensor('battery_voltage',self.friendly_name)
-        while True:
-            try:
-                if self.wifi.check_internet_connection():
-                    gc.collect()
-                    time.sleep(0.1)
-                    bat_volt = self.device.read_battery_voltage()
-                    self.ha.publish_measurement('battery_voltage', self.friendly_name, bat_volt)
-                    time.sleep(0.1)
-                    self.status_update()
-                    time.sleep(cycle_time)
-                    info('Scan done')
-                    self.retry_count = 0
-                    self.status = 'online'
-                else:
-                    connection = False
-                    while not connection:
-                        connection = self.wn.wifi.connect()
-                        if self.retry_count < 100 and connection:
-                            warning('No connection to WiFi. Retrying after 10s...')
-                            self.retry_count += 1
-                            time.sleep(10)
-                        else:
-                            warning('Two many reconnect attempts to wifi! Restarting..')
-                            machine.reset()
-                    self.retry_count = 0
-                    self.status = 'online'
-            except OSError as e:
-                if self.retry_count < 5:
-                    warning('OSError. Retrying...')
-                    self.retry_count += 1
-                else:
-                    error('Two many OSErrors! Restarting..')
-                    machine.reset()
-            except MQTTException as e:
-                if self.retry_count < 5:
-                    warning('MQTTException. Retrying...')
-                    self.retry_count += 1
-                else:
-                    error('Two many MQTTException! Restarting..')
-                    machine.reset()
-            except KeyboardInterrupt as e: 
-                print('Stopping main...')
-                break    
     def status_update(self):
         if self.hw_type == 'TTGO display':
             self.display.text(' '*15,1) # Flush old status text away
@@ -312,15 +292,13 @@ class wnode_engine():
             warning('Device status indication method not set for this hw type...')
         
         if self.mqtt != None and self.ha != None:
-            try: 
-                self.mqtt.client.connect()
-                self.mqtt.client.publish(
-                    self.ha.wnode_uptime_topic,
-                    msg=str(time.ticks_ms()/1000).encode(),
-                    qos = 0)
-                self.mqtt.client.disconnect()
-            except MQTTException:
-                warning('MQTTException at status update function. Continuing without action')
+            self.mqtt.client.connect()
+            self.mqtt.client.publish(
+                self.ha.wnode_uptime_topic,
+                msg=str(time.ticks_ms()/1000).encode(),
+                qos = 0)
+            self.mqtt.client.disconnect()
+
     
     # Mics  
     def install_mqtt_simple():
@@ -338,11 +316,11 @@ class wnode_engine():
         info('TTGO Display hardware initialized!')
 if __name__ is "__main__":
     wnode_parameters = {
-    'hw_type': 'ATOM',
+    'hw_type': 'Atom matrix',
     'wifi': True,
     'mqtt': True,
     'homeassistant': True,
-    'ble': True,
+    'ble': 0,
     'DS18B20': False,
     }
     wn = wnode_engine('W-Node', wnode_parameters)
