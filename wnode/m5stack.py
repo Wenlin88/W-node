@@ -43,8 +43,7 @@ class atom_matrix():
         self.adc = machine.ADC(adc_pin)
 
         # 11 dB attenuation means full 0 - 3.3V range
-        self.adc.atten(self.adc.ATTN_11DB)
-        
+        self.adc.atten(self.adc.ATTN_11DB)     
     def read_adc(self, n_samples = 100):
         n_samples = n_samples
         val = 0
@@ -65,3 +64,27 @@ if __name__ == '__main__':
     print(r1)
     t = 1/(1/(25+273.15)-math.log(32762/r1)/4300)-273.15
     print(t)
+
+def c3_stamp_neopixel_dev():
+    # WS2812
+    import esp32
+    from machine import Pin
+    from neopixel import NeoPixel
+    import random
+    esp32.RMT.bitstream_channel(0)
+    pin = Pin(2, Pin.OUT)
+    np = NeoPixel(pin, 1)
+    np[0] = (10, 10, 0)
+    np.write()
+
+    sleep_time = 0.2
+    for i in range(150):
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        np[0] = (r, g, b)
+        np.write()
+        time.sleep(sleep_time)
+        np[0] = (0, 0, 0)
+        np.write()
+        time.sleep(sleep_time)

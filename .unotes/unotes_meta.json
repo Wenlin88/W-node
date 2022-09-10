@@ -2,12 +2,6 @@
   "name": "",
   "isOrdered": true,
   "folders": {
-    "__pycache__": {
-      "name": "__pycache__",
-      "isOrdered": true,
-      "folders": {},
-      "files": {}
-    },
     "src": {
       "name": "src",
       "isOrdered": true,
@@ -22,6 +16,26 @@
     },
     "mpy firmwares": {
       "name": "mpy firmwares",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    },
+    "Guides": {
+      "name": "Guides",
+      "isOrdered": true,
+      "folders": {},
+      "files": {
+        "how to get started": 0
+      }
+    },
+    "lib": {
+      "name": "lib",
+      "isOrdered": true,
+      "folders": {},
+      "files": {}
+    },
+    "wnode": {
+      "name": "wnode",
       "isOrdered": true,
       "folders": {},
       "files": {}

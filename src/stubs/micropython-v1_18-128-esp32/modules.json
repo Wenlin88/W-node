@@ -1,6 +1,0 @@
-{"firmware": {"ver": "v1.18-128", "port": "esp32", "arch": "xtensawin", "sysname": "esp32", "release": "1.18.0", "name": "micropython", "mpy": 10757, "version": "1.18.0", "machine": "TTGO T-Display with ESP32", "build": "128", "nodename": "esp32", "platform": "esp32", "family": "micropython"},
-"stubber": {"version": "1.5.5"}, "stubtype": "firmware",
-"modules" :[
-{"file": "/stubs/micropython-v1_18-128-esp32/micropython.py", "module": "micropython"},
-{"file": "/stubs/micropython-v1_18-128-esp32/st7789.py", "module": "st7789"}
-]}

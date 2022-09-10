@@ -42,18 +42,24 @@ critical = logger.critical
 memory_usage_check(msg = 'Memory at beginning')
 
 wnode_parameters = {
-    'hw_type': 'Atom matrix',
-    'wifi': True,
-    'mqtt': 1,
-    'homeassistant': 1,
+    'hw_type': '',
+    'wifi': 0,
+    'mqtt': 0,
+    'homeassistant': 0,
     'ble': 1,
     }
 
 retry_count = 0
-while False:
+while True:
     try:
         wn = wnode.wnode_engine('W-Node', wnode_parameters)
-        break
+        while True:
+            wn.ble.scan(10)
+            beacon_data = wn.ble.search_beacons_from_scan_results()
+            print(beacon_data)
+            info('Sleeping for 5 sec....')
+            time.sleep(5)
+            print('Toimii')
     except OSError as e:
         if retry_count < 5:
             warning('OSError. Retrying...')
@@ -79,28 +85,3 @@ while False:
             error(f'Two many Undefined errors: {e}! Restarting...')
             machine.reset()
 
-# WS2812
-import esp32
-from machine import Pin
-from neopixel import NeoPixel
-import random
-esp32.RMT.bitstream_channel(0)
-pin = Pin(2, Pin.OUT)
-np = NeoPixel(pin, 1)
-np[0] = (10, 10, 0)
-np.write()
-
-
-sleep_time = 0.2
-for i in range(150):
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
-    np[0] = (r, g, b)
-    np.write()
-    time.sleep(sleep_time)
-    np[0] = (0, 0, 0)
-    np.write()
-    time.sleep(sleep_time)
-
-print('--- End of main ---')

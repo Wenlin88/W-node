@@ -13,9 +13,9 @@ def exicute_cmd_command_with_realtime_output(cmd):
         if realtime_output:
             print(realtime_output.strip(), flush=False)
             sys.stdout.flush()
-com = "COM3"
-exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32 --port {com} erase_flash')
-exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32 --port {com} --baud 105200 write_flash -z 0x1000 M5STACK_ATOM-20220618-v1.19.1.bin')
+com = "COM7"
+exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32-c3 --port {com} erase_flash')
+exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32-c3 --port {com} --baud 105200 write_flash -z 0x1000 esp32c3-usb-20220117-v1.18.bin')
 input('press enter to continue...')
 
 # %%

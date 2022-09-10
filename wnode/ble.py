@@ -9,10 +9,15 @@ from micropython import const
 
 
 # Logging functions
-def debug(msg):
-    print(msg)
-def info(msg):
-    print(msg)
+import ulogger
+import wnode.logging_handlers
+logger = ulogger.Logger(__name__, wnode.logging_handlers.default_handlers())
+debug = logger.debug
+info = logger.info
+warning = logger.warn
+error = logger.error
+critical = logger.critical
+
 
 # Data decode functions
 def decode_adv_field(payload, adv_type):
@@ -31,9 +36,9 @@ def decode_raw_ruuvitag_data(addr, rssi, raw_data):
     raw_data = raw_data[10:]
     # Support only format 3 (RAWV1) and 5 (RAWV2)
     # Decode data and pass it back as dictionary
-    if raw_data[4:6] == b'03':
+    if raw_data[4:6] == '03':
         data = _decode_raw_1(addr, rssi, ubinascii.unhexlify(raw_data))
-    elif raw_data[4:6] == b'05':
+    elif raw_data[4:6] == '05':
         data = _decode_raw_2(addr, rssi, ubinascii.unhexlify(raw_data))
     else:
         data = None
@@ -66,7 +71,8 @@ def _decode_raw_1(mac, rssi, data):
         'acceleration_x': acceleration_x,
         'acceleration_y': acceleration_y,
         'acceleration_z': acceleration_z,
-        'battery_voltage': battery_voltage,}
+        'battery_voltage': battery_voltage,
+        'last_update': time.time(),}
     return data_dict
 def _decode_raw_2(mac, rssi, data):
     """RuuviTag RAW 2 decoder"""
@@ -103,17 +109,21 @@ def _decode_raw_2(mac, rssi, data):
         'battery_voltage': battery_voltage,
         'tx_power': tx_power,
         'movement_counter': movement_counter,
-        'measurement_sequence': measurement_sequence,}
+        'measurement_sequence': measurement_sequence,
+        'last_update': time.time(),}
     return data_dict
 
 # Engine - The part of BLE module which is handling all tasks
 
-class engine():
+class ble_engine():
     def __init__(self):
         self.ble = bluetooth.BLE()
+        self.ble.irq(self._scan_irq)
+        self.ble.active(True)
         self.allowed_devices = []
         self.blocked_devices = []
         self.scan_results = []
+        self.beacons = []
         
         
         self._scanned_devices = []
@@ -127,7 +137,6 @@ class engine():
         # BLE scan status definitions
         _IRQ_SCAN_RESULT = const(5)
         _IRQ_SCAN_DONE = const(6)
-
         if event == _IRQ_SCAN_RESULT:
             if self._addr == None:
                 _, addr, _, rssi, adv_data = data
@@ -137,33 +146,52 @@ class engine():
         elif event == _IRQ_SCAN_DONE:
             self._scan_ready = True
     def scan(self, scan_time = 3):
-        self.ble.active(True)
-        self.ble.irq(self._scan_irq)
+        
         self._scan_ready = False
         self.scan_results = []
-        # self._scanned_devices = []
+        self._scanned_devices = []
+        
         info(f'Scanning Bluetooth devices for {scan_time} sec...')
-        self.ble.gap_scan(scan_time * 1000, 400000, 20000, False)
+        self.ble.gap_scan(scan_time * 1000, 400000, 40000, True)
         
         while self._scan_ready == False:
             if self._addr != None:
                 address = ubinascii.hexlify(self._addr).decode("utf-8")
                 if not address in self._scanned_devices:
-                    debug(f'Advertisement from {address}')
-                    self._scanned_devices.append(address)
-                    name = decode_adv_name(self._adv_data) or "?"
-                    data = ubinascii.hexlify(self._adv_data).decode("utf-8")
-                    self.scan_results.append({'address':address, 'name':name, 'adv_data':data, 'RSSI':self._rssi})
-                    self._reset_ble_device_irq_data_buffer()
+                    if (len(self.allowed_devices) == 0 and not address in self.blocked_devices) or (address in self.allowed_devices):
+                        debug(f'Advertisement from {address}')
+                        self._scanned_devices.append(address)
+                        name = decode_adv_name(self._adv_data) or "?"
+                        data = ubinascii.hexlify(self._adv_data).decode("utf-8")
+                        self.scan_results.append({'address':address, 'name':name, 'adv_data':data, 'RSSI':self._rssi})
+                self._reset_ble_device_irq_data_buffer()
             else:
-                time.sleep_ms(10)
+                time.sleep_ms(250)
 
-        print('Scan done!')
+        info('Scan done!')
+    def active(self):
+        self.ble.active(True)
+    def deactive(self):
         self.ble.active(False)
+    def search_beacons_from_scan_results(self):
+        _RUUVITAG = "9904"
 
+        self.beacons = []
+
+        for device in self.scan_results:
+            data = device['adv_data']
+            if len(data) >= 14: #Check if beacon is RuuviTag
+                if data[10:14] == _RUUVITAG:
+                    address = device['address']
+                    rssi = device['RSSI']
+                    debug(f'RuuviTag found with address: {address}')
+                    self.beacons.append(decode_raw_ruuvitag_data(address, rssi, data))
+
+        return self.beacons
 
 
 if __name__ is "__main__":
-    eng = engine()
-    eng.scan(scan_time = 3)
+    eng = ble_engine()
+    eng.scan(5)
+    eng.search_beacons_from_scan_results()
 
