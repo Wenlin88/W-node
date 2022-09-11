@@ -15,7 +15,7 @@ def exicute_cmd_command_with_realtime_output(cmd):
             sys.stdout.flush()
 com = "COM3"
 exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32 --port {com} erase_flash')
-exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32 --port {com} --baud 105200 write_flash -z 0x1000 M5STACK_ATOM-20220618-v1.19.1.bin')
+exicute_cmd_command_with_realtime_output(cmd = f'esptool --chip esp32 --port {com} --baud 115200 write_flash -z 0x1000 M5STACK_ATOM-20220618-v1.19.1.bin')
 input('press enter to continue...')
 
 # %%
